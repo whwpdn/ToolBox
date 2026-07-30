@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta
+      name="description"
+      content="계산기, 단위 변환, 이자·대출 계산 등 일상에 필요한 도구 모음"
+    />
+    <title>ToolBox</title>
+    <script>
+      // 첫 페인트 전에 테마를 적용해 화면 깜빡임(FOUC)을 막는다.
+      try {
+        const saved = JSON.parse(localStorage.getItem('toolbox.settings') || '{}')
+        const theme = saved?.data?.theme ?? 'system'
+        const dark =
+          theme === 'dark' ||
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', dark)
+      } catch {
+        /* 저장값이 깨져 있으면 기본(시스템) 테마로 둔다 */
+      }
+    </script>
+  </head>
+  <body class="h-full">
+    <div id="app" class="h-full"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

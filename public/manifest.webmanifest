@@ -1,0 +1,19 @@
+{
+  "name": "ToolBox — 일상 계산 도구 모음",
+  "short_name": "ToolBox",
+  "description": "계산기, 단위 변환, 이자·대출 계산 등 일상에 필요한 도구 모음",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fb",
+  "theme_color": "#2f6bd8",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

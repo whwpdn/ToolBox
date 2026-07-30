@@ -125,18 +125,55 @@ docker compose logs -f toolbox
 ssh <nas> 'uname -m'    # x86_64 → amd64, aarch64 → arm64
 ```
 
-### 5-2. 방법 A — NAS에서 직접 빌드 (권장, 간단)
+CI가 amd64와 arm64 이미지를 모두 만들어 하나의 태그로 묶어두므로(멀티아키텍처 매니페스트),
+`docker pull` 이 알아서 맞는 걸 가져온다. 아키텍처를 따로 지정할 필요는 없다.
+
+### 5-2. 방법 A — CI가 만든 이미지 사용 (권장)
+
+GitHub Actions가 푸시할 때마다 검증하고 `ghcr.io/whwpdn/toolbox` 로 이미지를 올린다.
+NAS는 받아서 띄우기만 하면 되므로 빌드 부하가 없다.
 
 ```bash
 ssh <nas>
-git clone <repo-url> /volume1/docker/toolbox
+mkdir -p /volume1/docker/toolbox && cd /volume1/docker/toolbox
+
+# docker-compose.yml 만 가져다 두고 build: 줄을 지운다
+curl -O https://raw.githubusercontent.com/whwpdn/ToolBox/main/docker-compose.yml
+
+# GHCR 패키지를 private으로 뒀다면 먼저 로그인
+#   GitHub → Settings → Developer settings → Personal access tokens
+#   read:packages 권한만 있으면 충분하다
+echo "<GITHUB_PAT>" | docker login ghcr.io -u whwpdn --password-stdin
+
+docker compose pull
+docker compose up -d
+```
+
+사용 가능한 태그:
+
+| 태그 | 의미 |
+|---|---|
+| `latest` | 기본 브랜치 최신 |
+| `<브랜치명>` | 해당 브랜치 최신 (예: `claude-daily-calculator-tools-plan-a20p8j`) |
+| `sha-<short>` | 특정 커밋. 롤백할 때 쓴다 |
+| `1.2.3` / `1.2` | `v*` 태그를 푸시했을 때 생성 |
+
+### 5-3. 방법 B — NAS에서 직접 빌드
+
+레지스트리를 쓰고 싶지 않을 때.
+
+```bash
+ssh <nas>
+git clone https://github.com/whwpdn/ToolBox.git /volume1/docker/toolbox
 cd /volume1/docker/toolbox
 docker compose up -d --build
 ```
 
-빌드 시 Node 의존성 설치 때문에 메모리를 좀 쓴다. 저사양 NAS(2GB 이하)에서 OOM이 나면 방법 B를 쓴다.
+빌드 시 Node 의존성 설치로 메모리를 쓴다. 저사양 NAS(2GB 이하)에서 OOM이 나면 방법 A나 C를 쓴다.
 
-### 5-3. 방법 B — 개발 PC에서 빌드 후 이미지 전송
+### 5-4. 방법 C — 개발 PC에서 빌드 후 이미지 전송
+
+레지스트리도 안 쓰고 NAS 빌드도 부담스러운 경우.
 
 ```bash
 # 개발 PC (NAS가 arm64인 경우)
@@ -146,13 +183,8 @@ scp toolbox.tar.gz <nas>:/volume1/docker/
 
 # NAS
 docker load < /volume1/docker/toolbox.tar.gz
-docker compose up -d          # build: 대신 image: toolbox:latest 사용
+docker compose up -d          # build: 줄을 지우고 image: toolbox:latest 로
 ```
-
-### 5-4. 방법 C — 레지스트리 경유 (CI 붙인 뒤)
-
-GitHub Actions에서 `ghcr.io/<user>/toolbox:latest` 로 푸시하고, NAS에서 `docker compose pull && up -d`.
-Phase 5의 CI 항목과 함께 진행한다.
 
 ## 6. 접속 · 공개 설정
 
@@ -166,12 +198,31 @@ DSM의 역방향 프록시를 쓸 때 WebSocket 설정은 필요 없다 (실시�
 
 ## 7. 업데이트 절차
 
+레지스트리 이미지를 쓰는 경우 (방법 A):
+
 ```bash
 ssh <nas>
 cd /volume1/docker/toolbox
+docker compose pull
+docker compose up -d
+docker image prune -f          # 이전 이미지 정리
+```
+
+특정 커밋으로 롤백:
+
+```bash
+docker compose down
+docker run -d --name toolbox -p 8080:80 --restart unless-stopped \
+  ghcr.io/whwpdn/toolbox:sha-1a2b3c4
+```
+
+직접 빌드하는 경우 (방법 B):
+
+```bash
+cd /volume1/docker/toolbox
 git pull
 docker compose up -d --build
-docker image prune -f          # 이전 이미지 정리
+docker image prune -f
 ```
 
 `index.html` 이 no-cache이므로 새로고침 한 번으로 새 버전이 적용된다.

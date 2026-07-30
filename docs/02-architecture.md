@@ -21,52 +21,58 @@ NAS Docker (호스트 :8080 → 컨테이너 :80)
 ```
 ToolBox/
 ├─ docs/                          # 설계 문서
+├─ scripts/
+│  └─ new-tool.mjs                # 도구 스캐폴드 (npm run new:tool)
 ├─ public/
 │  ├─ favicon.svg
-│  └─ manifest.webmanifest        # PWA
+│  └─ manifest.webmanifest
 ├─ src/
 │  ├─ main.ts
-│  ├─ App.vue                     # <RouterView> + 전역 셸
+│  ├─ App.vue                     # AppShell + RouterView + Suspense
 │  │
 │  ├─ core/                       # 도구와 무관한 플랫폼 코드
-│  │  ├─ registry.ts              # 도구 자동 수집 + 색인
+│  │  ├─ registry.ts              # 도구 자동 수집 + 검증
 │  │  ├─ categories.ts            # 카테고리 정의 (단일 소스)
 │  │  ├─ router.ts                # 레지스트리 → 라우트 생성
 │  │  ├─ search.ts                # Fuse.js 인덱스 + 초성 매칭
-│  │  ├─ types.ts                 # ToolMeta, Category 등 공용 타입
-│  │  └─ storage.ts               # localStorage 래퍼 (스키마 버전 포함)
+│  │  ├─ types.ts                 # ToolMeta, Category, IconName
+│  │  ├─ storage.ts               # localStorage 래퍼 (스키마 버전 포함)
+│  │  ├─ units.ts                 # 단위 변환 계수 테이블 (+ .spec.ts)
+│  │  └─ finance-policy.ts        # 세율·규제비율 상수 (기준일자 포함)
 │  │
-│  ├─ stores/                     # Pinia
-│  │  ├─ settings.ts              # 테마, 숫자 포맷(1,000 구분자 등)
+│  ├─ stores/
+│  │  ├─ settings.ts              # 테마
 │  │  └─ usage.ts                 # 즐겨찾기, 최근 사용
 │  │
 │  ├─ layouts/
-│  │  ├─ AppShell.vue             # 헤더 + 사이드바 + 콘텐츠 슬롯
+│  │  ├─ AppShell.vue             # 헤더 + 사이드바 + 모바일 드로어 + 팔레트
 │  │  └─ ToolLayout.vue           # 도구 페이지 공통 프레임
 │  │
 │  ├─ components/
 │  │  ├─ ui/                      # 디자인 시스템 프리미티브
+│  │  │  ├─ AppIcon.vue           # SVG path 맵 (아이콘 라이브러리 미사용)
 │  │  │  ├─ NumberField.vue       # 숫자 입력(천단위 구분, 단위 접미사)
+│  │  │  ├─ DateField.vue
 │  │  │  ├─ SelectField.vue
 │  │  │  ├─ ResultCard.vue        # 결과 강조 + 복사 버튼
 │  │  │  ├─ DataTable.vue         # 상환 스케줄 등 표
 │  │  │  ├─ FormulaNote.vue       # 접이식 계산식 설명
-│  │  │  └─ CopyButton.vue
+│  │  │  ├─ CopyButton.vue
+│  │  │  └─ types.ts              # Column, SelectOption
 │  │  ├─ CommandPalette.vue       # Ctrl+K 검색
-│  │  ├─ CategoryGrid.vue
+│  │  ├─ UnitConverter.vue        # 단위 변환 도구 4종이 공유하는 UI
 │  │  ├─ ToolCard.vue
 │  │  └─ FavoriteToggle.vue
 │  │
 │  ├─ composables/
 │  │  ├─ useQuerySync.ts          # 입력 상태 ↔ URL 쿼리 양방향 동기화
-│  │  ├─ useClipboard.ts
-│  │  ├─ useHotkey.ts
-│  │  └─ useRecentTools.ts
+│  │  └─ useClipboard.ts
 │  │
 │  ├─ utils/
-│  │  ├─ number.ts                # 반올림, 천단위, 통화 포맷
-│  │  ├─ money.ts                 # 원 단위 정수 연산 (부동소수 방지)
-│  │  └─ hangul.ts                # 초성 추출 / 초성 매칭
+│  │  ├─ number.ts                # 반올림, 천단위, 유효자리 포맷
+│  │  ├─ money.ts                 # 원 단위 정수 연산 (+ .spec.ts)
+│  │  ├─ date.ts                  # UTC 정규화 날짜 연산 (+ .spec.ts)
+│  │  └─ hangul.ts                # 초성 추출 / 매칭 (+ .spec.ts)
 │  │
 │  ├─ tools/                      # ★ 도구 하나 = 폴더 하나
 │  │  ├─ calculator/
@@ -74,24 +80,29 @@ ToolBox/
 │  │  │  ├─ View.vue
 │  │  │  ├─ logic.ts
 │  │  │  └─ logic.spec.ts
-│  │  ├─ unit-length/
 │  │  ├─ loan-repayment/
+│  │  ├─ unit-length/             # 계산이 units.ts에 있어 logic.ts 없음
 │  │  └─ ...
 │  │
-│  └─ pages/
-│     ├─ HomePage.vue
-│     ├─ CategoryPage.vue
-│     └─ NotFoundPage.vue
+│  ├─ pages/
+│  │  ├─ HomePage.vue
+│  │  ├─ CategoryPage.vue
+│  │  └─ NotFoundPage.vue
+│  │
+│  └─ styles/main.css             # Tailwind 4 @theme + 색상 토큰
 │
-├─ docker/
-│  └─ nginx.conf
+├─ .github/workflows/ci.yml       # 검증 → Docker 이미지 빌드·푸시
+├─ docker/nginx.conf
 ├─ Dockerfile
 ├─ docker-compose.yml
+├─ eslint.config.js
 ├─ vite.config.ts
-├─ tailwind.config.js
 ├─ tsconfig.json
 └─ package.json
 ```
+
+> Tailwind 4는 CSS-first 설정을 쓰므로 `tailwind.config.js` 가 없다.
+> 색상 토큰과 다크 모드 변수는 `src/styles/main.css` 의 `@theme` 블록에 있다.
 
 **핵심 원칙**: `core/`, `components/`, `utils/` 는 특정 도구를 알지 못한다.
 의존 방향은 `tools/ → core·components·utils` 단방향이며, 그 반대는 없다.
@@ -244,8 +255,21 @@ const result = computed(() => calcLoanRepayment(input))
 **계산 로직은 반드시 `logic.ts` 로 분리**한다. 이유:
 
 - Vue 없이 순수 함수로 단위테스트 가능 (`logic.spec.ts`)
-- 다른 도구에서 재사용 가능 (대출 상환 ↔ 대출 한도는 같은 원리금 공식을 공유)
+- 다른 도구에서 재사용 가능 — `loan-limit` 은 `loan-repayment` 의 원리금 공식을 역산에 그대로 쓴다
 - 리팩터링 시 UI와 계산의 회귀를 분리해서 판단 가능
+
+### 테스트 범위: 로직만
+
+`@vue/test-utils` 와 jsdom을 넣지 않았다. 도구의 위험은 전부 계산에 있고
+(1원 틀리면 신뢰가 무너진다) UI는 얇은 바인딩 계층이라, 순수 함수 테스트가
+투자 대비 효과가 가장 크다. 부수적으로 의존성이 줄어 `npm audit` 이 깨끗하다
+(`@vue/test-utils` → `js-beautify` → `brace-expansion` 계열 권고가 딸려온다).
+
+컴포넌트 테스트가 실제로 필요해지면 그때 추가한다:
+
+```bash
+npm i -D @vue/test-utils jsdom   # vite.config.ts 의 test.environment 를 'jsdom' 으로
+```
 
 ## 6. 금액 계산 정밀도
 
@@ -272,4 +296,25 @@ localStorage 키에는 스키마 버전을 함께 저장해서, 나중에 구조
 - `meta.ts` 만 eager 이므로 카테고리·검색 인덱스 비용은 메타데이터 수준
 - Fuse.js 는 명령 팔레트 첫 오픈 시 동적 import
 - 차트가 필요한 도구는 해당 도구 chunk 안에서만 차트 라이브러리 로드
-- Nginx: gzip/brotli, 해시 파일명 자산은 `immutable` 1년 캐시, `index.html` 은 no-cache
+- Nginx: gzip, 해시 파일명 자산은 `immutable` 1년 캐시, `index.html` 은 no-cache
+
+### 실측 (도구 14개 기준)
+
+| 항목 | 크기 (gzip) |
+|---|---|
+| 진입 번들 (`index-*.js`) | 51.6 kB |
+| CSS | 4.9 kB |
+| 검색 chunk (`search-*.js`, 팔레트 오픈 시) | 10.2 kB |
+| 도구 chunk 1개 | 0.8 ~ 3.4 kB |
+
+도구를 추가해도 진입 번들은 `meta.ts` 분량(수백 바이트)만 늘어난다.
+`vite.config.ts` 에서 도구 chunk 이름을 `tool-<id>-<hash>.js` 로 지정해두었으므로
+`npm run build` 출력으로 도구별 크기를 바로 확인할 수 있다.
+
+### 아이콘: 라이브러리를 쓰지 않은 이유
+
+도구 메타데이터가 아이콘을 **문자열 이름**으로 지정한다(`icon: 'landmark'`).
+`lucide-vue-next` 같은 라이브러리는 named import를 tree-shaking하는 구조라서,
+이름을 동적으로 받으려면 아이콘 세트 전체를 번들에 넣어야 한다(수백 kB).
+그래서 `AppIcon.vue` 안에 필요한 아이콘의 SVG path만 맵으로 두었다.
+`IconName` 유니온 타입이 오타를 컴파일 시점에 잡아준다.

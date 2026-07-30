@@ -2,7 +2,17 @@
 
 도구 하나 = 폴더 하나. **플랫폼 코드는 건드리지 않는다.**
 
-## 1. 폴더 만들기
+## 0. 스캐폴드로 시작하기
+
+```bash
+npm run new:tool -- <tool-id> <카테고리> "<도구 이름>"
+npm run new:tool -- savings finance "예금·적금 만기 계산기"
+```
+
+네 파일 골격이 생성되고, 사용 가능한 아이콘 이름 목록도 주석으로 함께 들어간다.
+아래 문서는 그 골격을 채울 때의 규칙이다.
+
+## 1. 폴더 구조
 
 ```
 src/tools/<tool-id>/
@@ -14,6 +24,13 @@ src/tools/<tool-id>/
 
 `<tool-id>` 는 kebab-case, URL 슬러그가 된다 (`/tools/<tool-id>`).
 **한 번 배포한 id는 바꾸지 않는다.**
+
+레지스트리가 부팅 시점에 규칙을 검증한다. 아래를 어기면 개발 서버가 바로 실패한다.
+
+- `meta.ts` 의 `id` 가 폴더명과 다름
+- `id` 중복
+- `categories.ts` 에 없는 카테고리
+- `View.vue` 누락
 
 ## 2. `meta.ts`
 
@@ -186,6 +203,25 @@ npm run build   # dist/assets/loan-limit-<hash>.js 확인
 ```ts
 const meta: ToolMeta = { /* ... */ enabled: false }
 ```
+
+## 7-1. 이미 있는 공용 부품을 먼저 찾기
+
+도구를 만들다가 손이 많이 간다고 느끼면 대개 이미 있는 부품을 못 찾은 것이다.
+
+| 하려는 일 | 쓸 것 |
+|---|---|
+| 단위 변환 도구 | `components/UnitConverter.vue` — `units` 만 넘기면 UI·표·스왑까지 완성 |
+| 배율로 안 되는 단위 변환 | `UnitConverter` 에 `converter` prop 전달 (온도 도구 참고) |
+| 대출·이자 계산 | `tools/loan-repayment/logic.ts` 의 `monthlyPayment`, `buildSchedule` |
+| 금액 표시 | `utils/money.ts` — `formatWon`, `formatWonKorean`, `won` |
+| 자릿수가 크게 변하는 숫자 | `utils/number.ts` 의 `formatSignificant` |
+| 날짜 연산 | `utils/date.ts` — 전부 UTC 정규화되어 시간대 영향 없음 |
+| 날짜 입력 | `components/ui/DateField.vue` |
+| 세율·규제 비율 | `core/finance-policy.ts` (기준일자 포함) |
+| 긴 표 | `components/ui/DataTable.vue` |
+| 도구가 2단 레이아웃과 안 맞음 | `ToolLayout` 의 기본 슬롯 사용 (2단 그리드를 건너뛴다) |
+
+없으면 만들어도 되지만, **공용 부품 추가는 도구 커밋과 분리**한다.
 
 ## 8. 새 카테고리 추가
 

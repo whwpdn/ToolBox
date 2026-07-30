@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+
+/* 다크 모드를 클래스 기반으로 전환한다 (index.html 인라인 스크립트가 .dark 를 붙인다) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI',
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
+/*
+ * 색상은 CSS 변수 한 겹을 거친다.
+ * 컴포넌트는 bg-surface/text-muted 같은 의미 이름만 쓰고,
+ * 라이트/다크 값은 여기서만 바꾼다.
+ */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-danger: var(--danger);
+  --color-positive: var(--positive);
+}
+
+:root {
+  --canvas: oklch(98.4% 0.003 247);
+  --surface: oklch(100% 0 0);
+  --surface-hover: oklch(96.5% 0.005 247);
+  --line: oklch(91% 0.008 247);
+  --ink: oklch(21% 0.02 250);
+  --muted: oklch(52% 0.02 250);
+  --brand: oklch(55% 0.17 255);
+  --brand-soft: oklch(95.5% 0.02 255);
+  --brand-ink: oklch(100% 0 0);
+  --danger: oklch(58% 0.19 25);
+  --positive: oklch(56% 0.13 155);
+}
+
+.dark {
+  --canvas: oklch(19.5% 0.018 254);
+  --surface: oklch(24.5% 0.02 254);
+  --surface-hover: oklch(29% 0.022 254);
+  --line: oklch(34% 0.02 254);
+  --ink: oklch(96% 0.005 254);
+  --muted: oklch(70% 0.02 254);
+  --brand: oklch(70% 0.15 255);
+  --brand-soft: oklch(31% 0.045 255);
+  --brand-ink: oklch(19% 0.02 254);
+  --danger: oklch(69% 0.17 25);
+  --positive: oklch(72% 0.14 155);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* iOS에서 숫자 입력 시 확대되는 것을 막기 위해 최소 16px 유지 */
+    font-size: 16px;
+  }
+
+  /* 숫자를 세로로 정렬해서 결과값이 흔들리지 않게 한다 */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* 숫자 입력의 스피너 제거 (직접 입력·단위 표기와 충돌) */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    appearance: textfield;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

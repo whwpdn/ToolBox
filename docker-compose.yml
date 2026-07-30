@@ -1,0 +1,22 @@
+services:
+  toolbox:
+    # 로컬/NAS에서 직접 빌드할 때는 build를, 레지스트리 이미지를 쓸 때는
+    # 아래 image 줄만 남기고 build 줄을 주석 처리한다.
+    build: .
+    image: ghcr.io/whwpdn/toolbox:latest
+    container_name: toolbox
+    ports:
+      - '8080:80'
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1/healthz']
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    # 상태를 서버에 두지 않으므로 볼륨이 필요 없다 (설정은 브라우저 localStorage)
+    logging:
+      driver: json-file
+      options:
+        max-size: '5m'
+        max-file: '3'

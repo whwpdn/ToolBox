@@ -1,0 +1,39 @@
+{
+  "name": "toolbox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "일상생활에 필요한 계산·변환 도구 모음",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{ts,vue,css}\"",
+    "new:tool": "node scripts/new-tool.mjs"
+  },
+  "dependencies": {
+    "fuse.js": "^7.1.0",
+    "pinia": "^3.0.3",
+    "vue": "^3.5.22",
+    "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.1.16",
+    "@types/node": "^26.1.2",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "eslint": "^10.8.0",
+    "eslint-plugin-vue": "^10.5.0",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.2",
+    "vite": "^7.1.12",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.1.1"
+  }
+}
