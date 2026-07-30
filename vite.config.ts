@@ -10,6 +10,18 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  /*
+   * 포트는 환경변수로 덮어쓸 수 있게 둔다. 설정 파일을 고치지 않고 바꿀 수 있다.
+   *   PORT=3000 npm run dev
+   *   PREVIEW_PORT=8080 npm run preview
+   * 다른 기기(폰 등)에서 접속해야 하면 --host 를 붙인다: npm run dev -- --host
+   */
+  server: {
+    port: Number(process.env.PORT) || 5173,
+  },
+  preview: {
+    port: Number(process.env.PREVIEW_PORT) || 4173,
+  },
   build: {
     target: 'es2020',
     rollupOptions: {
