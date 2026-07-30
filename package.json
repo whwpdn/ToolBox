@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,vue,css}\"",
-    "new:tool": "node scripts/new-tool.mjs"
+    "new:tool": "node scripts/new-tool.mjs",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "fuse.js": "^7.1.0",
@@ -28,6 +29,7 @@
     "@vitejs/plugin-vue": "^6.0.1",
     "eslint": "^10.8.0",
     "eslint-plugin-vue": "^10.5.0",
+    "playwright-core": "^1.62.0",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3",
