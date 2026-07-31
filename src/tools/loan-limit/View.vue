@@ -4,8 +4,10 @@ import ToolLayout from '@/layouts/ToolLayout.vue'
 import NumberField from '@/components/ui/NumberField.vue'
 import ResultCard from '@/components/ui/ResultCard.vue'
 import FormulaNote from '@/components/ui/FormulaNote.vue'
+import QuickPicks from '@/components/ui/QuickPicks.vue'
+import type { QuickPick } from '@/components/ui/types'
 import { useQuerySync } from '@/composables/useQuerySync'
-import { formatPercent } from '@/utils/number'
+import { clamp, formatPercent } from '@/utils/number'
 import { formatWon, formatWonKorean } from '@/utils/money'
 import {
   DSR_LIMIT_PCT,
@@ -31,6 +33,34 @@ useQuerySync(input)
 
 const result = computed(() => calcLoanLimit(input))
 
+/** 연소득은 억 단위까지 가는 경우가 드물어 금액 단위를 낮게 잡았다 (F-28: 누적) */
+const INCOME_PICKS: QuickPick[] = [
+  { label: '1백만', value: 1_000_000 },
+  { label: '1천만', value: 10_000_000 },
+  { label: '5천만', value: 50_000_000 },
+]
+
+const HOUSE_PICKS: QuickPick[] = [
+  { label: '1천만', value: 10_000_000 },
+  { label: '5천만', value: 50_000_000 },
+  { label: '1억', value: 100_000_000 },
+]
+
+/** 대출 기간은 고르는 값이므로 치환 */
+const YEAR_PICKS: QuickPick[] = [
+  { label: '10년', value: 10 },
+  { label: '20년', value: 20 },
+  { label: '30년', value: 30 },
+  { label: '40년', value: 40 },
+]
+
+const MAX_AMOUNT = 100_000_000_000
+const MAX_YEARS = 50
+
+const addIncome = (v: number) => (input.annualIncome = clamp(input.annualIncome + v, 0, MAX_AMOUNT))
+const addHousePrice = (v: number) => (input.housePrice = clamp(input.housePrice + v, 0, MAX_AMOUNT))
+const setYears = (v: number) => (input.years = clamp(v, 1, MAX_YEARS))
+
 const bindingLabel = computed(() => {
   switch (result.value.binding) {
     case 'DSR':
@@ -50,15 +80,25 @@ const noRoom = computed(() => result.value.final === 0)
 <template>
   <ToolLayout>
     <template #inputs>
-      <NumberField
-        v-model="input.annualIncome"
-        label="연소득 (세전)"
-        suffix="원"
-        thousands
-        :step="1_000_000"
-        :min="0"
-        :hint="formatWonKorean(input.annualIncome)"
-      />
+      <div>
+        <NumberField
+          v-model="input.annualIncome"
+          label="연소득 (세전)"
+          suffix="원"
+          thousands
+          :step="1_000_000"
+          :min="0"
+          :hint="formatWonKorean(input.annualIncome)"
+        />
+        <QuickPicks
+          class="mt-2"
+          :picks="INCOME_PICKS"
+          mode="add"
+          clearable
+          @pick="addIncome"
+          @clear="input.annualIncome = 0"
+        />
+      </div>
       <NumberField
         v-model="input.existingAnnualPayment"
         label="기존 대출 연간 원리금 상환액"
@@ -77,15 +117,25 @@ const noRoom = computed(() => result.value.final === 0)
         :min="0"
         hint="DTI 산정 · 위 금액 중 이자분"
       />
-      <NumberField
-        v-model="input.housePrice"
-        label="주택 가격 (담보)"
-        suffix="원"
-        thousands
-        :step="10_000_000"
-        :min="0"
-        hint="0이면 LTV 기준 제외"
-      />
+      <div>
+        <NumberField
+          v-model="input.housePrice"
+          label="주택 가격 (담보)"
+          suffix="원"
+          thousands
+          :step="10_000_000"
+          :min="0"
+          hint="0이면 LTV 기준 제외"
+        />
+        <QuickPicks
+          class="mt-2"
+          :picks="HOUSE_PICKS"
+          mode="add"
+          clearable
+          @pick="addHousePrice"
+          @clear="input.housePrice = 0"
+        />
+      </div>
       <div class="grid gap-4 sm:grid-cols-2">
         <NumberField
           v-model="input.annualRatePct"
@@ -105,6 +155,14 @@ const noRoom = computed(() => result.value.final === 0)
           :max="50"
         />
       </div>
+
+      <QuickPicks
+        label="대출 기간"
+        :picks="YEAR_PICKS"
+        mode="set"
+        :active="input.years"
+        @pick="setYears"
+      />
       <div class="grid gap-4 sm:grid-cols-3">
         <NumberField
           v-model="input.dsrLimitPct"

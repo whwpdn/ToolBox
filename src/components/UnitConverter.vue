@@ -71,7 +71,15 @@ function swap() {
 <template>
   <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
     <section class="space-y-4" aria-label="입력">
-      <NumberField v-model="state.value" label="값" :digits="0" thousands :step="1" />
+      <NumberField
+        v-model="state.value"
+        label="값"
+        :digits="0"
+        thousands
+        :step="1"
+        align="center"
+        stepper
+      />
       <SelectField v-model="state.from" label="변환 전 단위" :options="options" />
 
       <div class="flex justify-center">

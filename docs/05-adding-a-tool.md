@@ -231,6 +231,7 @@ const meta: ToolMeta = { /* ... */ enabled: false }
 | 날짜 연산                     | `utils/date.ts` — 전부 UTC 정규화되어 시간대 영향 없음                   |
 | 날짜 입력                     | `components/ui/DateField.vue`                                            |
 | 자주 쓰는 값 빠른 입력        | `components/ui/QuickPicks.vue` — `mode="set"`(치환) / `mode="add"`(누적) |
+| 값 가운데 정렬 · 증감 버튼    | `NumberField` 의 `align="center"` / `stepper` prop (F-29)                |
 | 세율·규제 비율                | `core/finance-policy.ts` (기준일자 포함)                                 |
 | 긴 표                         | `components/ui/DataTable.vue`                                            |
 | 도구가 2단 레이아웃과 안 맞음 | `ToolLayout` 의 기본 슬롯 사용 (2단 그리드를 건너뛴다)                   |

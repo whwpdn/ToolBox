@@ -6,9 +6,10 @@ import SelectField from '@/components/ui/SelectField.vue'
 import ResultCard from '@/components/ui/ResultCard.vue'
 import DataTable from '@/components/ui/DataTable.vue'
 import FormulaNote from '@/components/ui/FormulaNote.vue'
-import type { Column } from '@/components/ui/types'
+import QuickPicks from '@/components/ui/QuickPicks.vue'
+import type { Column, QuickPick } from '@/components/ui/types'
 import { useQuerySync } from '@/composables/useQuerySync'
-import { formatNumber, formatPercent } from '@/utils/number'
+import { clamp, formatNumber, formatPercent } from '@/utils/number'
 import { formatWon, formatWonKorean } from '@/utils/money'
 import { INTEREST_TAX_RATE } from '@/core/finance-policy'
 import {
@@ -40,6 +41,29 @@ const result = computed(() =>
     taxed: input.taxed,
   }),
 )
+
+/** 원금은 조합해서 쌓는 값이므로 누적 (F-28) */
+const PRINCIPAL_PICKS: QuickPick[] = [
+  { label: '1백만', value: 1_000_000 },
+  { label: '1천만', value: 10_000_000 },
+  { label: '5천만', value: 50_000_000 },
+  { label: '1억', value: 100_000_000 },
+]
+
+/** 예치 기간은 고르는 값이므로 치환 */
+const TERM_PICKS: QuickPick[] = [
+  { label: '6개월', value: 6 },
+  { label: '1년', value: 12 },
+  { label: '2년', value: 24 },
+  { label: '3년', value: 36 },
+  { label: '5년', value: 60 },
+]
+
+const MAX_PRINCIPAL = 100_000_000_000
+const MAX_MONTHS = 600
+
+const addPrincipal = (v: number) => (input.principal = clamp(input.principal + v, 0, MAX_PRINCIPAL))
+const setMonths = (v: number) => (input.months = clamp(v, 0, MAX_MONTHS))
 
 const kindOptions = Object.entries(KIND_LABELS).map(([value, label]) => ({ value, label }))
 const frequencyOptions = Object.entries(FREQUENCY_LABELS).map(([value, label]) => ({
@@ -81,15 +105,25 @@ const rows = computed(() =>
 <template>
   <ToolLayout>
     <template #inputs>
-      <NumberField
-        v-model="input.principal"
-        label="원금"
-        suffix="원"
-        thousands
-        :step="1_000_000"
-        :min="0"
-        :hint="formatWonKorean(input.principal)"
-      />
+      <div>
+        <NumberField
+          v-model="input.principal"
+          label="원금"
+          suffix="원"
+          thousands
+          :step="1_000_000"
+          :min="0"
+          :hint="formatWonKorean(input.principal)"
+        />
+        <QuickPicks
+          class="mt-2"
+          :picks="PRINCIPAL_PICKS"
+          mode="add"
+          clearable
+          @pick="addPrincipal"
+          @clear="input.principal = 0"
+        />
+      </div>
       <NumberField
         v-model="input.annualRatePct"
         label="연 이율"
@@ -99,15 +133,24 @@ const rows = computed(() =>
         :min="0"
         :max="100"
       />
-      <NumberField
-        v-model="input.months"
-        label="예치 기간"
-        suffix="개월"
-        :step="6"
-        :min="0"
-        :max="600"
-        :hint="yearLabel"
-      />
+      <div>
+        <NumberField
+          v-model="input.months"
+          label="예치 기간"
+          suffix="개월"
+          :step="6"
+          :min="0"
+          :max="600"
+          :hint="yearLabel"
+        />
+        <QuickPicks
+          class="mt-2"
+          :picks="TERM_PICKS"
+          mode="set"
+          :active="input.months"
+          @pick="setMonths"
+        />
+      </div>
       <SelectField v-model="input.kind" label="이자 방식" :options="kindOptions" />
       <SelectField
         v-if="input.kind === 'compound'"
