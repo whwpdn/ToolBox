@@ -5,11 +5,12 @@ import NumberField from '@/components/ui/NumberField.vue'
 import SelectField from '@/components/ui/SelectField.vue'
 import ResultCard from '@/components/ui/ResultCard.vue'
 import DataTable from '@/components/ui/DataTable.vue'
-import type { Column } from '@/components/ui/types'
+import QuickPicks from '@/components/ui/QuickPicks.vue'
+import type { Column, QuickPick } from '@/components/ui/types'
 import FormulaNote from '@/components/ui/FormulaNote.vue'
 import CopyButton from '@/components/ui/CopyButton.vue'
 import { useQuerySync } from '@/composables/useQuerySync'
-import { formatNumber, formatPercent } from '@/utils/number'
+import { clamp, formatNumber, formatPercent } from '@/utils/number'
 import { formatWon, formatWonKorean } from '@/utils/money'
 import { FINANCE_DISCLAIMER } from '@/core/finance-policy'
 import { REPAYMENT_LABELS, calcLoanRepayment, type RepaymentType } from './logic'
@@ -33,6 +34,35 @@ const result = computed(() =>
 )
 
 const typeOptions = Object.entries(REPAYMENT_LABELS).map(([value, label]) => ({ value, label }))
+
+/** 대출 금액은 누르는 만큼 더해진다 (1억 + 5천만 = 1억 5천만) */
+const AMOUNT_PICKS: QuickPick[] = [
+  { label: '1백만', value: 1_000_000 },
+  { label: '1천만', value: 10_000_000 },
+  { label: '5천만', value: 50_000_000 },
+  { label: '1억', value: 100_000_000 },
+]
+
+/** 상환 기간은 고르는 값이므로 치환한다 */
+const TERM_PICKS: QuickPick[] = [
+  { label: '5년', value: 60 },
+  { label: '10년', value: 120 },
+  { label: '20년', value: 240 },
+  { label: '30년', value: 360 },
+  { label: '40년', value: 480 },
+]
+
+/** NumberField 의 max(600개월)와 같은 상한을 적용해 입력 경로 간 동작을 맞춘다 */
+const MAX_MONTHS = 600
+const MAX_PRINCIPAL = 100_000_000_000
+
+function addPrincipal(amount: number) {
+  input.principal = clamp(input.principal + amount, 0, MAX_PRINCIPAL)
+}
+
+function setMonths(months: number) {
+  input.months = clamp(months, 1, MAX_MONTHS)
+}
 
 const yearLabel = computed(() => {
   const y = Math.floor(input.months / 12)
@@ -77,15 +107,26 @@ const isEqualTotal = computed(() => input.type === 'equal-total')
 <template>
   <ToolLayout>
     <template #inputs>
-      <NumberField
-        v-model="input.principal"
-        label="대출 금액"
-        suffix="원"
-        thousands
-        :step="10_000_000"
-        :min="0"
-        :hint="formatWonKorean(input.principal)"
-      />
+      <div>
+        <NumberField
+          v-model="input.principal"
+          label="대출 금액"
+          suffix="원"
+          thousands
+          :step="10_000_000"
+          :min="0"
+          :hint="formatWonKorean(input.principal)"
+        />
+        <QuickPicks
+          class="mt-2"
+          :picks="AMOUNT_PICKS"
+          mode="add"
+          clearable
+          @pick="addPrincipal"
+          @clear="input.principal = 0"
+        />
+      </div>
+
       <NumberField
         v-model="input.annualRatePct"
         label="연 금리"
@@ -95,15 +136,25 @@ const isEqualTotal = computed(() => input.type === 'equal-total')
         :min="0"
         :max="30"
       />
-      <NumberField
-        v-model="input.months"
-        label="상환 기간"
-        suffix="개월"
-        :step="12"
-        :min="1"
-        :max="600"
-        :hint="yearLabel"
-      />
+
+      <div>
+        <NumberField
+          v-model="input.months"
+          label="상환 기간"
+          suffix="개월"
+          :step="12"
+          :min="1"
+          :max="600"
+          :hint="yearLabel"
+        />
+        <QuickPicks
+          class="mt-2"
+          :picks="TERM_PICKS"
+          mode="set"
+          :active="input.months"
+          @pick="setMonths"
+        />
+      </div>
       <SelectField v-model="input.type" label="상환 방식" :options="typeOptions" />
     </template>
 

@@ -58,7 +58,8 @@ ToolBox/
 │  │  │  ├─ DataTable.vue         # 상환 스케줄 등 표
 │  │  │  ├─ FormulaNote.vue       # 접이식 계산식 설명
 │  │  │  ├─ CopyButton.vue
-│  │  │  └─ types.ts              # Column, SelectOption
+│  │  │  ├─ QuickPicks.vue        # 자주 쓰는 값 칩 버튼 (치환/누적)
+│  │  │  └─ types.ts              # Column, SelectOption, QuickPick
 │  │  ├─ CommandPalette.vue       # Ctrl+K 검색
 │  │  ├─ UnitConverter.vue        # 단위 변환 도구 4종이 공유하는 UI
 │  │  ├─ ToolCard.vue
@@ -115,8 +116,7 @@ ToolBox/
 ```ts
 // src/core/types.ts
 export type CategoryId =
-  | 'calculator' | 'unit' | 'finance' | 'math'
-  | 'datetime' | 'health' | 'text' | 'random'
+  'calculator' | 'unit' | 'finance' | 'math' | 'datetime' | 'health' | 'text' | 'random'
 
 export interface ToolMeta {
   /** URL 슬러그. /tools/<id> — 한 번 정하면 바꾸지 않는다(북마크 보존) */
@@ -127,7 +127,7 @@ export interface ToolMeta {
   category: CategoryId
   /** 검색어. 한글/영문/오타/동의어를 넉넉히 넣는다 */
   keywords: string[]
-  icon: string                 // lucide 아이콘 이름
+  icon: IconName // AppIcon.vue 의 path 맵 키 (유니온 타입이라 오타를 컴파일 시 잡는다)
   /** 홈 정렬 가중치. 낮을수록 앞 */
   order?: number
   /** false면 라우트·검색에서 완전히 제외 */
@@ -146,11 +146,8 @@ export interface ToolEntry extends ToolMeta {
 
 ```ts
 // src/core/registry.ts
-const metaModules = import.meta.glob<{ default: ToolMeta }>(
-  '../tools/*/meta.ts',
-  { eager: true },
-)
-const viewModules = import.meta.glob('../tools/*/View.vue')  // lazy
+const metaModules = import.meta.glob<{ default: ToolMeta }>('../tools/*/meta.ts', { eager: true })
+const viewModules = import.meta.glob('../tools/*/View.vue') // lazy
 
 export const tools: ToolEntry[] = Object.entries(metaModules)
   .map(([path, mod]) => {
@@ -159,11 +156,11 @@ export const tools: ToolEntry[] = Object.entries(metaModules)
     if (!component) throw new Error(`${dir}: View.vue 없음`)
     return { ...mod.default, component }
   })
-  .filter(t => t.enabled !== false)
+  .filter((t) => t.enabled !== false)
   .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.title.localeCompare(b.title, 'ko'))
 
-export const toolsByCategory = Object.groupBy(tools, t => t.category)
-export const toolById = new Map(tools.map(t => [t.id, t]))
+export const toolsByCategory = Object.groupBy(tools, (t) => t.category)
+export const toolById = new Map(tools.map((t) => [t.id, t]))
 ```
 
 `meta.ts` 의 `id` 가 폴더명과 일치하는지, 중복된 `id` 가 없는지는 개발 모드에서 assert로 검사한다.
@@ -175,11 +172,11 @@ export const toolById = new Map(tools.map(t => [t.id, t]))
 const routes: RouteRecordRaw[] = [
   { path: '/', name: 'home', component: () => import('@/pages/HomePage.vue') },
   { path: '/c/:categoryId', name: 'category', component: () => import('@/pages/CategoryPage.vue') },
-  ...tools.map(tool => ({
+  ...tools.map((tool) => ({
     path: `/tools/${tool.id}`,
     name: `tool:${tool.id}`,
     component: tool.component,
-    meta: { tool },              // ToolLayout·브레드크럼·최근사용이 참조
+    meta: { tool }, // ToolLayout·브레드크럼·최근사용이 참조
   })),
   { path: '/:pathMatch(.*)*', component: () => import('@/pages/NotFoundPage.vue') },
 ]
@@ -193,11 +190,11 @@ const routes: RouteRecordRaw[] = [
 // src/core/search.ts
 const fuse = new Fuse(tools, {
   keys: [
-    { name: 'title',       weight: 3 },
-    { name: 'keywords',    weight: 2 },
+    { name: 'title', weight: 3 },
+    { name: 'keywords', weight: 2 },
     { name: 'description', weight: 1 },
   ],
-  threshold: 0.4,          // 오타 허용
+  threshold: 0.4, // 오타 허용
   ignoreLocation: true,
 })
 
@@ -207,23 +204,46 @@ export function searchTools(query: string): ToolEntry[] {
 
   // 1) 초성만 입력한 경우: ㄷㅊㅎㄷ → 대출한도
   if (isChoseongOnly(q)) {
-    return tools.filter(t =>
-      matchChoseong(t.title, q) || t.keywords.some(k => matchChoseong(k, q)))
+    return tools.filter(
+      (t) => matchChoseong(t.title, q) || t.keywords.some((k) => matchChoseong(k, q)),
+    )
   }
   // 2) 일반 퍼지 검색
-  return fuse.search(q).map(r => r.item)
+  return fuse.search(q).map((r) => r.item)
 }
 ```
 
 한글 초성 추출은 `utils/hangul.ts`:
 
 ```ts
-const CHOSEONG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ']
+const CHOSEONG = [
+  'ㄱ',
+  'ㄲ',
+  'ㄴ',
+  'ㄷ',
+  'ㄸ',
+  'ㄹ',
+  'ㅁ',
+  'ㅂ',
+  'ㅃ',
+  'ㅅ',
+  'ㅆ',
+  'ㅇ',
+  'ㅈ',
+  'ㅉ',
+  'ㅊ',
+  'ㅋ',
+  'ㅌ',
+  'ㅍ',
+  'ㅎ',
+]
 export const toChoseong = (s: string) =>
-  [...s].map(ch => {
-    const code = ch.charCodeAt(0) - 0xac00
-    return code >= 0 && code <= 11171 ? CHOSEONG[Math.floor(code / 588)] : ch
-  }).join('')
+  [...s]
+    .map((ch) => {
+      const code = ch.charCodeAt(0) - 0xac00
+      return code >= 0 && code <= 11171 ? CHOSEONG[Math.floor(code / 588)] : ch
+    })
+    .join('')
 ```
 
 검색 인덱스는 레지스트리에서 만들어지므로, 도구를 추가하면 **검색에도 자동 반영된다.**
@@ -239,15 +259,15 @@ import { useQuerySync } from '@/composables/useQuerySync'
 import { calcLoanRepayment } from './logic'
 
 const input = reactive({ principal: 100_000_000, rate: 4.5, months: 360, type: 'equal-total' })
-useQuerySync(input)                                  // URL ↔ 입력 동기화 (F-24)
+useQuerySync(input) // URL ↔ 입력 동기화 (F-24)
 const result = computed(() => calcLoanRepayment(input))
 </script>
 
 <template>
   <ToolLayout>
-    <template #inputs>  <!-- 좌: 입력 --> </template>
-    <template #result>  <!-- 우: 결과 강조 + 표 --> </template>
-    <template #note>    <FormulaNote>계산식 설명</FormulaNote> </template>
+    <template #inputs> <!-- 좌: 입력 --> </template>
+    <template #result> <!-- 우: 결과 강조 + 표 --> </template>
+    <template #note> <FormulaNote>계산식 설명</FormulaNote> </template>
   </ToolLayout>
 </template>
 ```
@@ -282,11 +302,11 @@ npm i -D @vue/test-utils jsdom   # vite.config.ts 의 test.environment 를 'jsdo
 
 ## 7. 상태 관리 범위
 
-| 데이터 | 위치 | 이유 |
-|---|---|---|
-| 도구 입력값 | 컴포넌트 로컬 + URL 쿼리 | 도구 간 공유 불필요, 링크 공유가 더 유용 |
-| 즐겨찾기 / 최근사용 | Pinia `usage` + localStorage | 전역 노출 필요 |
-| 테마 / 숫자 포맷 | Pinia `settings` + localStorage | 전역 노출 필요 |
+| 데이터              | 위치                            | 이유                                     |
+| ------------------- | ------------------------------- | ---------------------------------------- |
+| 도구 입력값         | 컴포넌트 로컬 + URL 쿼리        | 도구 간 공유 불필요, 링크 공유가 더 유용 |
+| 즐겨찾기 / 최근사용 | Pinia `usage` + localStorage    | 전역 노출 필요                           |
+| 테마 / 숫자 포맷    | Pinia `settings` + localStorage | 전역 노출 필요                           |
 
 localStorage 키에는 스키마 버전을 함께 저장해서, 나중에 구조가 바뀌면 마이그레이션하거나 안전하게 초기화한다.
 
@@ -300,12 +320,12 @@ localStorage 키에는 스키마 버전을 함께 저장해서, 나중에 구조
 
 ### 실측 (도구 14개 기준)
 
-| 항목 | 크기 (gzip) |
-|---|---|
-| 진입 번들 (`index-*.js`) | 51.6 kB |
-| CSS | 4.9 kB |
-| 검색 chunk (`search-*.js`, 팔레트 오픈 시) | 10.2 kB |
-| 도구 chunk 1개 | 0.8 ~ 3.4 kB |
+| 항목                                       | 크기 (gzip)  |
+| ------------------------------------------ | ------------ |
+| 진입 번들 (`index-*.js`)                   | 51.6 kB      |
+| CSS                                        | 4.9 kB       |
+| 검색 chunk (`search-*.js`, 팔레트 오픈 시) | 10.2 kB      |
+| 도구 chunk 1개                             | 0.8 ~ 3.4 kB |
 
 도구를 추가해도 진입 번들은 `meta.ts` 분량(수백 바이트)만 늘어난다.
 `vite.config.ts` 에서 도구 chunk 이름을 `tool-<id>-<hash>.js` 로 지정해두었으므로

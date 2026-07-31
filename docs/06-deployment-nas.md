@@ -92,18 +92,18 @@ services:
     image: toolbox:latest
     container_name: toolbox
     ports:
-      - "8080:80"
+      - '8080:80'
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1/healthz']
       interval: 30s
       timeout: 3s
       retries: 3
     logging:
       driver: json-file
       options:
-        max-size: "5m"
-        max-file: "3"
+        max-size: '5m'
+        max-file: '3'
 ```
 
 볼륨이 없다. 상태를 서버에 두지 않으므로 백업 대상도 없다 (사용자 설정은 브라우저 localStorage).
@@ -151,12 +151,12 @@ docker compose up -d
 
 사용 가능한 태그:
 
-| 태그 | 의미 |
-|---|---|
-| `latest` | 기본 브랜치 최신 |
-| `<브랜치명>` | 해당 브랜치 최신 (예: `claude-daily-calculator-tools-plan-a20p8j`) |
-| `sha-<short>` | 특정 커밋. 롤백할 때 쓴다 |
-| `1.2.3` / `1.2` | `v*` 태그를 푸시했을 때 생성 |
+| 태그            | 의미                                                               |
+| --------------- | ------------------------------------------------------------------ |
+| `latest`        | 기본 브랜치 최신                                                   |
+| `<브랜치명>`    | 해당 브랜치 최신 (예: `claude-daily-calculator-tools-plan-a20p8j`) |
+| `sha-<short>`   | 특정 커밋. 롤백할 때 쓴다                                          |
+| `1.2.3` / `1.2` | `v*` 태그를 푸시했을 때 생성                                       |
 
 ### 5-3. 방법 B — NAS에서 직접 빌드
 
@@ -188,11 +188,11 @@ docker compose up -d          # build: 줄을 지우고 image: toolbox:latest �
 
 ## 6. 접속 · 공개 설정
 
-| 방식 | 설정 | 비고 |
-|---|---|---|
-| 내부망 직접 | `http://<NAS-IP>:8080` | 기본. 이것만으로 충분 |
-| 리버스 프록시 | Synology DSM → 제어판 → 로그인 포털 → 고급 → 역방향 프록시<br>`toolbox.<domain>` → `localhost:8080` | HTTPS 인증서 적용 가능 |
-| 외부 공개 | 위 + 방화벽/포트포워딩 | 개인 도구이므로 굳이 열지 않는 편이 안전 |
+| 방식          | 설정                                                                                                | 비고                                     |
+| ------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| 내부망 직접   | `http://<NAS-IP>:8080`                                                                              | 기본. 이것만으로 충분                    |
+| 리버스 프록시 | Synology DSM → 제어판 → 로그인 포털 → 고급 → 역방향 프록시<br>`toolbox.<domain>` → `localhost:8080` | HTTPS 인증서 적용 가능                   |
+| 외부 공개     | 위 + 방화벽/포트포워딩                                                                              | 개인 도구이므로 굳이 열지 않는 편이 안전 |
 
 DSM의 역방향 프록시를 쓸 때 WebSocket 설정은 필요 없다 (실시간 통신 없음).
 
@@ -230,11 +230,11 @@ PWA(Phase 5)를 붙인 뒤에는 서비스워커가 새 버전을 감지하면 "
 
 ## 8. 트러블슈팅
 
-| 증상 | 원인 / 확인 |
-|---|---|
-| 도구 URL 새로고침 시 404 | `try_files ... /index.html` 누락 |
-| 배포했는데 옛 화면 | 브라우저 캐시 또는 서비스워커. `index.html` no-cache 헤더 확인 (`curl -I`) |
-| `exec format error` | 이미지 아키텍처 불일치. `uname -m` 과 빌드 플랫폼 대조 |
-| 빌드 중 컨테이너 kill | NAS 메모리 부족 → 방법 B/C로 전환 |
-| 8080 포트 충돌 | NAS 다른 서비스가 점유. compose에서 `8081:80` 등으로 변경 |
-| 페이지는 뜨는데 자산 404 | Vite `base` 설정. 서브패스 배포면 `base: '/toolbox/'` 필요 |
+| 증상                     | 원인 / 확인                                                                |
+| ------------------------ | -------------------------------------------------------------------------- |
+| 도구 URL 새로고침 시 404 | `try_files ... /index.html` 누락                                           |
+| 배포했는데 옛 화면       | 브라우저 캐시 또는 서비스워커. `index.html` no-cache 헤더 확인 (`curl -I`) |
+| `exec format error`      | 이미지 아키텍처 불일치. `uname -m` 과 빌드 플랫폼 대조                     |
+| 빌드 중 컨테이너 kill    | NAS 메모리 부족 → 방법 B/C로 전환                                          |
+| 8080 포트 충돌           | NAS 다른 서비스가 점유. compose에서 `8081:80` 등으로 변경                  |
+| 페이지는 뜨는데 자산 404 | Vite `base` 설정. 서브패스 배포면 `base: '/toolbox/'` 필요                 |

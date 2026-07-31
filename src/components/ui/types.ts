@@ -14,3 +14,9 @@ export interface Column {
   /** 숫자 열은 오른쪽 정렬 + tabular-nums 로 표시된다 */
   numeric?: boolean
 }
+
+/** QuickPicks 칩 하나. label은 표시용, value는 실제 값 */
+export interface QuickPick {
+  label: string
+  value: number
+}

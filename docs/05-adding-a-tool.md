@@ -38,13 +38,22 @@ src/tools/<tool-id>/
 import type { ToolMeta } from '@/core/types'
 
 const meta: ToolMeta = {
-  id: 'loan-limit',                 // 폴더명과 반드시 동일
+  id: 'loan-limit', // 폴더명과 반드시 동일
   title: '대출 한도 계산기',
   description: '연소득과 기존 부채로 DSR·DTI·LTV 기준 대출 한도를 계산합니다',
   category: 'finance',
   keywords: [
-    '대출한도', '대출', '한도', 'DSR', 'DTI', 'LTV',
-    '주택담보대출', '주담대', '영끌', 'loan', 'limit',
+    '대출한도',
+    '대출',
+    '한도',
+    'DSR',
+    'DTI',
+    'LTV',
+    '주택담보대출',
+    '주담대',
+    '영끌',
+    'loan',
+    'limit',
   ],
   icon: 'landmark',
   order: 30,
@@ -68,7 +77,7 @@ export default meta
 
 ```ts
 export interface LoanLimitInput {
-  annualIncome: number      // 연소득 (원)
+  annualIncome: number // 연소득 (원)
   existingAnnualPayment: number
   housePrice: number
   annualRatePct: number
@@ -80,7 +89,7 @@ export interface LoanLimitInput {
 export interface LoanLimitResult {
   byDsr: number
   byLtv: number
-  final: number             // min(byDsr, byLtv)
+  final: number // min(byDsr, byLtv)
   binding: 'DSR' | 'LTV'
 }
 
@@ -91,6 +100,7 @@ export function calcLoanLimit(input: LoanLimitInput): LoanLimitResult {
 ```
 
 규칙:
+
 - Vue import 금지 (`ref`, `computed` 등 없음)
 - 부작용 없음, 같은 입력이면 항상 같은 출력
 - 금액 반환값은 **원 단위 정수** (`utils/money.ts` 의 `round0` 사용)
@@ -104,12 +114,14 @@ import { calcLoanLimit } from './logic'
 
 describe('calcLoanLimit', () => {
   it('DSR이 더 빡빡하면 DSR 한도를 최종값으로 쓴다', () => {
-    const r = calcLoanLimit({ /* ... */ })
+    const r = calcLoanLimit({/* ... */})
     expect(r.final).toBe(r.byDsr)
     expect(r.binding).toBe('DSR')
   })
 
-  it('연소득 0이면 한도는 0', () => { /* ... */ })
+  it('연소득 0이면 한도는 0', () => {
+    /* ... */
+  })
 
   it('엑셀 PMT 기준값과 일치한다', () => {
     // 외부 검증된 값을 회귀 테스트로 고정
@@ -142,7 +154,7 @@ const input = reactive({
   ltvLimitPct: 70,
 })
 
-useQuerySync(input)                                   // URL 쿼리 동기화
+useQuerySync(input) // URL 쿼리 동기화
 const result = computed(() => calcLoanLimit(input))
 </script>
 
@@ -165,8 +177,8 @@ const result = computed(() => calcLoanLimit(input))
 
     <template #note>
       <FormulaNote>
-        DSR = (신규 대출 연 원리금 + 기존 대출 연 원리금) ÷ 연소득<br>
-        LTV = 대출금 ÷ 주택가격<br>
+        DSR = (신규 대출 연 원리금 + 기존 대출 연 원리금) ÷ 연소득<br />
+        LTV = 대출금 ÷ 주택가격<br />
         실제 금융기관 심사 결과와 다를 수 있는 참고용 계산입니다.
       </FormulaNote>
     </template>
@@ -182,6 +194,7 @@ npm run dev                             # /tools/loan-limit 접속
 ```
 
 체크리스트:
+
 - [ ] 홈 → 해당 카테고리에 카드가 보인다
 - [ ] `Ctrl+K` 에서 이름·키워드·초성으로 검색된다
 - [ ] 즐겨찾기 토글이 동작한다
@@ -208,20 +221,59 @@ const meta: ToolMeta = { /* ... */ enabled: false }
 
 도구를 만들다가 손이 많이 간다고 느끼면 대개 이미 있는 부품을 못 찾은 것이다.
 
-| 하려는 일 | 쓸 것 |
-|---|---|
-| 단위 변환 도구 | `components/UnitConverter.vue` — `units` 만 넘기면 UI·표·스왑까지 완성 |
-| 배율로 안 되는 단위 변환 | `UnitConverter` 에 `converter` prop 전달 (온도 도구 참고) |
-| 대출·이자 계산 | `tools/loan-repayment/logic.ts` 의 `monthlyPayment`, `buildSchedule` |
-| 금액 표시 | `utils/money.ts` — `formatWon`, `formatWonKorean`, `won` |
-| 자릿수가 크게 변하는 숫자 | `utils/number.ts` 의 `formatSignificant` |
-| 날짜 연산 | `utils/date.ts` — 전부 UTC 정규화되어 시간대 영향 없음 |
-| 날짜 입력 | `components/ui/DateField.vue` |
-| 세율·규제 비율 | `core/finance-policy.ts` (기준일자 포함) |
-| 긴 표 | `components/ui/DataTable.vue` |
-| 도구가 2단 레이아웃과 안 맞음 | `ToolLayout` 의 기본 슬롯 사용 (2단 그리드를 건너뛴다) |
+| 하려는 일                     | 쓸 것                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------ |
+| 단위 변환 도구                | `components/UnitConverter.vue` — `units` 만 넘기면 UI·표·스왑까지 완성   |
+| 배율로 안 되는 단위 변환      | `UnitConverter` 에 `converter` prop 전달 (온도 도구 참고)                |
+| 대출·이자 계산                | `tools/loan-repayment/logic.ts` 의 `monthlyPayment`, `buildSchedule`     |
+| 금액 표시                     | `utils/money.ts` — `formatWon`, `formatWonKorean`, `won`                 |
+| 자릿수가 크게 변하는 숫자     | `utils/number.ts` 의 `formatSignificant`                                 |
+| 날짜 연산                     | `utils/date.ts` — 전부 UTC 정규화되어 시간대 영향 없음                   |
+| 날짜 입력                     | `components/ui/DateField.vue`                                            |
+| 자주 쓰는 값 빠른 입력        | `components/ui/QuickPicks.vue` — `mode="set"`(치환) / `mode="add"`(누적) |
+| 세율·규제 비율                | `core/finance-policy.ts` (기준일자 포함)                                 |
+| 긴 표                         | `components/ui/DataTable.vue`                                            |
+| 도구가 2단 레이아웃과 안 맞음 | `ToolLayout` 의 기본 슬롯 사용 (2단 그리드를 건너뛴다)                   |
 
 없으면 만들어도 되지만, **공용 부품 추가는 도구 커밋과 분리**한다.
+
+### QuickPicks 사용 예
+
+```vue
+<script setup lang="ts">
+import QuickPicks from '@/components/ui/QuickPicks.vue'
+import type { QuickPick } from '@/components/ui/types'
+import { clamp } from '@/utils/number'
+
+// 금액처럼 조합해 쌓는 값 → 누적
+const AMOUNT_PICKS: QuickPick[] = [
+  { label: '1천만', value: 10_000_000 },
+  { label: '1억', value: 100_000_000 },
+]
+
+// 기간처럼 하나를 고르는 값 → 치환
+const TERM_PICKS: QuickPick[] = [
+  { label: '10년', value: 120 },
+  { label: '30년', value: 360 },
+]
+
+// 버튼 경로에도 직접 입력과 같은 상한을 적용한다
+const addPrincipal = (v: number) => (input.principal = clamp(input.principal + v, 0, 1e11))
+</script>
+
+<template>
+  <QuickPicks
+    :picks="AMOUNT_PICKS"
+    mode="add"
+    clearable
+    @pick="addPrincipal"
+    @clear="input.principal = 0"
+  />
+  <QuickPicks :picks="TERM_PICKS" mode="set" :active="input.months" @pick="input.months = $event" />
+</template>
+```
+
+모드 선택 기준은 [01-requirements.md](01-requirements.md) 의 F-28 규격을 따른다.
 
 ## 8. 새 카테고리 추가
 
