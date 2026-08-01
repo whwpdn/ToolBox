@@ -86,8 +86,16 @@ describe('evaluate · 오류 처리', () => {
   })
 
   it('허용되지 않은 문자는 오류', () => {
-    expect(error('1+a')).toBe('사용할 수 없는 문자가 있습니다')
-    expect(error('alert(1)')).toBe('사용할 수 없는 문자가 있습니다')
+    expect(error('1+#')).toBe('사용할 수 없는 문자가 있습니다')
+    expect(error('1+[2]')).toBe('사용할 수 없는 문자가 있습니다')
+  })
+
+  it('알 수 없는 이름은 함수 오류로 안내한다', () => {
+    // 공학용 계산기와 파서를 공유하면서 식별자가 유효 토큰이 됐다.
+    // 'a'는 문자 오류가 아니라 '모르는 함수'로 안내하는 편이 정확하다.
+    expect(value('1+a')).toBeNull()
+    expect(error('1+a')).toContain('알 수 없는 함수')
+    expect(value('alert(1)')).toBeNull()
   })
 
   it('코드 실행 시도를 차단한다', () => {

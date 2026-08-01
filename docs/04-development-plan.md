@@ -162,14 +162,29 @@
 
 우선 순서 제안:
 
-1. `savings` 예금·적금 만기 — 금융 로직 재사용
-2. `vat` 부가세 · `salary` 연봉 실수령액
-3. `unit-volume` / `unit-speed` / `unit-data`
-4. `dday` · `workdays` · `timezone`
-5. `bmr` · `electricity` · `fuel-cost`
-6. `json-format` · `base64` · `hash` · `color-convert`
-7. `gcd-lcm` · `radix` · `statistics`
-8. `lotto`
+1. [x] `calculator-sci` 공학용 계산기 — 기본 계산기 파서를 `core/expression.ts` 로 승격해 확장
+2. [x] `savings` 예금·적금 계산기 — 금융 로직 재사용
+3. [x] `vat` 부가세 계산기
+4. [ ] `salary` 연봉 실수령액
+5. [ ] `unit-volume` / `unit-speed` / `unit-data`
+6. [ ] `dday` · `workdays` · `timezone`
+7. [ ] `bmr` · `electricity` · `fuel-cost`
+8. [ ] `json-format` · `base64` · `hash` · `color-convert`
+9. [ ] `gcd-lcm` · `radix` · `statistics`
+10. [ ] `lotto`
+
+### 수식 파서를 공용 모듈로 승격 (1차)
+
+공학용 계산기를 만들면서 기본 계산기의 파서를 `src/core/expression.ts` 로 옮기고
+함수·상수·거듭제곱·팩토리얼을 추가했다. 두 도구가 같은 파서를 공유한다.
+
+- 문법: `expr → term → unary → power → postfix → primary`.
+  거듭제곱은 우결합(`2^3^2 = 2^9`)이고 단항 부호보다 먼저 계산된다(`-2^2 = -4`)
+- 각도 모드(deg/rad)는 평가 옵션으로 넘긴다. 같은 식이라도 값이 달라지므로
+  계산 이력에 모드를 함께 기록한다
+- `eval()`을 쓰지 않는 원칙은 그대로다. 식별자가 유효 토큰이 되면서
+  `alert(1)` 은 '문자 오류'가 아니라 '알 수 없는 함수'로 안내된다
+- `tan(90°)`처럼 정의되지 않는 값은 1.6e16 대신 안내 문구를 보여준다
 
 ---
 

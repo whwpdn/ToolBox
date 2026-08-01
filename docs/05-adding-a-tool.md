@@ -6,7 +6,7 @@
 
 ```bash
 npm run new:tool -- <tool-id> <카테고리> "<도구 이름>"
-npm run new:tool -- savings finance "예금·적금 만기 계산기"
+npm run new:tool -- salary finance "연봉 실수령액 계산기"
 ```
 
 네 파일 골격이 생성되고, 사용 가능한 아이콘 이름 목록도 주석으로 함께 들어간다.
