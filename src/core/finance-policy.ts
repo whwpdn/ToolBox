@@ -28,6 +28,13 @@ export const DTI_LIMIT_PCT = 50
  */
 export const LTV_LIMIT_PCT = 70
 
+/**
+ * 취득세·중개보수 기준 시점.
+ * 이 값들은 지방세법·공인중개사법 시행규칙 개정으로 바뀐다.
+ */
+export const ACQUISITION_TAX_AS_OF = '2026-07'
+export const BROKERAGE_FEE_AS_OF = '2026-07'
+
 /** 대출 한도 계산 시 쓰는 안내 문구 */
 export const FINANCE_DISCLAIMER =
   `참고용 계산입니다. 실제 한도·금리·상환액은 금융기관의 심사 기준, 규제지역 여부, ` +
